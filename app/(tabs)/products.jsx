@@ -1,22 +1,33 @@
-import { useContext } from "react";
-import { Button, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useContext, useEffect } from "react";
+import { Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ProductContext } from "../../context/ProductContext";
 import { ProductCard } from "../../components/products/ProductCard";
 import { useRouter } from 'expo-router';
+import { AuthContext } from "../../context/AuthContext";
 
 export default function TabProduct(){
 
 
-    const { productos } = useContext(ProductContext)
+    const { productos, totalCarrito } = useContext(ProductContext)
+
+    const { user } = useContext(AuthContext)
+
 
     const router  = useRouter();
+
+    useEffect(() => {
+        // console.log('User: ', user);
+
+    }, [user, totalCarrito])
+    
+
 
 
     const renderItem = ({ item }) => (
         <TouchableOpacity
             style={ styles.touchable}
             key={item.id}
-            onPress={() => console.log('Touch')}
+            onPress={() => router.push(`/product/${item.id}`)}
         >
         <ProductCard
             title={item.title}
@@ -28,6 +39,15 @@ export default function TabProduct(){
 
     return (
         <View style={styles.container}>
+            <Text style={styles.carrito}> Items en carrito: {totalCarrito()}</Text>
+            {
+                user.cart.map((item )=> (
+                    <Text key={item.id} style={styles.carrito}> Producto: {item.title}</Text>
+                ))
+            }
+            
+            <Text style={styles.carrito}> Usuario: {user?.usuario}</Text>
+
             <FlatList
                 data={productos}
                 renderItem={ renderItem}
@@ -35,11 +55,15 @@ export default function TabProduct(){
                 numColumns={2}
                 contentContainerStyle={styles.flatListContainer}
             />
-            <Button
-                title="Agregar Producto"
-                style={styles.button}
-                onPress={() => router.push('/addproduct')}
-            />
+            {
+            user?.admin && (
+                <Button
+                    title="Agregar Producto"
+                    style={styles.button}
+                    onPress={() => router.push('/addproduct')}
+                />
+            )
+            }
         </View>
     )
 }
@@ -61,5 +85,11 @@ const styles = StyleSheet.create({
         flex: 1,
         margin: 10,
         maxWidth: '45%'
+    },
+    carrito: {
+        fontSize: 24, 
+        marginVertical: 30,
+        textAlign: 'center',
+        fontWeight: 'bold'
     }
 })

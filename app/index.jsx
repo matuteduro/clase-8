@@ -1,7 +1,10 @@
-import { Image, StyleSheet, Platform, View, Text, TextInput, Button, Switch } from 'react-native';
+import { Image, StyleSheet, Platform, View, Text, TextInput, Button, Switch, Alert } from 'react-native';
 import { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { AuthContext } from '../context/AuthContext';
+import * as LocalAuthentication from 'expo-local-authentication';
+
+
 
 export default function Login() {
 
@@ -23,16 +26,46 @@ export default function Login() {
     }
   }
 
+  const handleAuth = async () => {
+    const hasHardware = await LocalAuthentication.hasHardwareAsync()
+    console.log('hasHardware: ', hasHardware);
+
+    if(!hasHardware) {
+      Alert.alert('Error', 'El dispositivo no tiene hardware necesario para la authenticacion biometrica')
+    }
+
+    const isEnrolled = await LocalAuthentication.isEnrolledAsync()
+
+    if(!isEnrolled){
+      Alert.alert('Error', 'No hay datos biometricos registrados en el dispositivo')
+    }
+
+    console.log('isEnrolled: ', isEnrolled);
+
+    const auth = await LocalAuthentication.authenticateAsync({
+      promptMessage: 'Porfavor confirma tu identidad'
+    })
+
+    console.log('Auth: ', auth);
+
+    if(auth.success){
+      router.push('/(tabs)/home')
+    }else{
+      Alert.alert('Error', 'No se pudo verificar la identidad')
+    }
+
+  }
+
   useEffect(() => {
 
     if(status === 'authenticated'){
-      router.push('/(tabs)/home')
+      handleAuth()
     }
 
   }, [status])
 
 
-  if(status === 'checking' || status === 'authenticated'){
+  if(status === 'checking'){
     return <Text>Cargando...</Text>
   }
 
